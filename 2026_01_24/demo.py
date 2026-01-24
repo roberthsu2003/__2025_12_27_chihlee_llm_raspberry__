@@ -1,67 +1,80 @@
-"""
-title: Example Filter
-author: open-webui
-author_url: https://github.com/open-webui
-funding_url: https://github.com/open-webui
-version: 0.1
-"""
-
-from pydantic import BaseModel, Field
+import json
 from typing import Optional
+
+import requests
+from pydantic import BaseModel, Field
 
 
 class Filter:
     class Valves(BaseModel):
-        priority: int = Field(
-            default=0, description="Priority level for the filter operations."
-        )
-        max_turns: int = Field(
-            default=8, description="Maximum allowable conversation turns for a user."
-        )
-        pass
-
-    class UserValves(BaseModel):
-        max_turns: int = Field(
-            default=4, description="Maximum allowable conversation turns for a user."
+        # 您可以把翻譯開關放在這裡
+        enable_translation: bool = Field(
+            default=True, description="是否啟用自動翻譯為英文"
         )
         pass
 
     def __init__(self):
-        # Indicates custom file handling logic. This flag helps disengage default routines in favor of custom
-        # implementations, informing the WebUI to defer file-related operations to designated methods within this class.
-        # Alternatively, you can remove the files directly from the body in from the inlet hook
-        # self.file_handler = True
-
-        # Initialize 'valves' with specific configurations. Using 'Valves' instance helps encapsulate settings,
-        # which ensures settings are managed cohesively and not confused with operational flags like 'file_handler'.
         self.valves = self.Valves()
-        pass
 
-    def inlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
-        # Modify the request body or validate it before processing by the chat completion API.
-        # This function is the pre-processor for the API where various checks on the input can be performed.
-        # It can also modify the request before sending it to the API.
-        print(f"inlet:{__name__}")
-        print(f"inlet:body:{body}")
-        print(f"inlet:user:{__user__}")
+    def inlet(self, body: dict, __user__: dict | None = None) -> dict:
+        # 1. 取得使用者最後一句話
+        user_message = body["messages"][-1]["content"]
 
-        if __user__.get("role", "admin") in ["user", "admin"]:
-            messages = body.get("messages", [])
+        # 2. 如果啟用翻譯且內容不是空的
+        if self.valves.enable_translation and user_message:
+            try:
+                # 這裡我們利用目前對話的模型來幫我們翻譯
+                # 或者您可以指定一個特定的模型 (例如 'llama3')
+                model_id = body.get("model")
 
-            max_turns = min(__user__["valves"].max_turns, self.valves.max_turns)
-            if len(messages) > max_turns:
-                raise Exception(
-                    f"Conversation turn limit exceeded. Max turns: {max_turns}"
-                )
+                # 構造一個翻譯請求（這是一個簡單的技巧：在背後偷偷呼叫 API）
+                # 注意：這會增加一點點延遲
+                translated_text = self._translate_to_english(user_message, model_id)
+
+                # 3. 將翻譯後的內容寫回 body
+                print(f"原始內容: {user_message}")
+                print(f"翻譯後內容: {translated_text}")
+
+                body["messages"][-1]["content"] = translated_text
+
+            except Exception as e:
+                print(f"翻譯出錯: {e}")
 
         return body
 
-    def outlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
-        # Modify or analyze the response body after processing by the API.
-        # This function is the post-processor for the API, which can be used to modify the response
-        # or perform additional checks and analytics.
-        print(f"outlet:{__name__}")
-        print(f"outlet:body:{body}")
-        print(f"outlet:user:{__user__}")
+    def _translate_to_english(self, text: str, model_id: str | None):
+        # 1. 確保 IP 正確（Raspberry Pi 的實體 IP）
+        host_ip = "127.0.0.1"
+        url = f"http://{host_ip}:11434/api/generate"
 
+        # 2. 嚴格的翻譯指令
+        prompt = f"Translate the following Chinese text to English. Output ONLY the English translation, no explanation.\nText: {text}\nEnglish:"
+
+        payload = {
+            "model": "gpt-oss:20b-cloud",  # 不可以使用model_id(因為我們使用雲模型,必需明確指定模型名稱)
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": 0.0},  # 讓翻譯結果最精確
+        }
+
+        try:
+            # 設定較長的 timeout，因為 Raspberry Pi 運算較慢
+            response = requests.post(url, json=payload, timeout=20)
+
+            if response.status_code == 404:
+                print(f"錯誤：找不到 API 路徑，請檢查 Ollama 版本")
+                return text
+
+            response.raise_for_status()
+            result = response.json()
+            translated = result.get("response", "").strip()
+
+            # 過濾掉可能出現的引號
+            return translated.replace('"', "") if translated else text
+
+        except Exception as e:
+            print(f"翻譯請求失敗: {e}")
+            return text
+
+    def outlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
         return body
