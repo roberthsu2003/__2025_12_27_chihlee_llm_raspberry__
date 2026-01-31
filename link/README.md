@@ -25,7 +25,7 @@ https://www.youtube.com/watch?v=_3t5rz6qQv0
 
 ## 2026_01_17_早上
 
-[https://www.youtube.com/watch?v=cBvlhhBM2Ts](https://youtube.com/live/FFqVOC9DrBg)
+https://www.youtube.com/watch?v=cBvlhhBM2Ts
 
 ## 2026_01_17_下午
 
@@ -44,7 +44,7 @@ https://www.youtube.com/watch?v=PtQb49Ru-NM
 ----
 
 ## 2026_01_31_上午
-https://www.youtube.com/watch?v=0yNuZHTteMQ
+https://youtube.com/live/FFqVOC9DrBg
 
 
 ## 2026_01_31_下午
