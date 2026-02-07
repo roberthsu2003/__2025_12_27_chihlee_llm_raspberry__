@@ -52,6 +52,11 @@ https://www.youtube.com/watch?v=0yNuZHTteMQ
 
 ---
 
+## 2026_02_07_早上
+
+https://youtube.com/live/kYP8WeH4GKU
+
+
 ## 2026_02_07_下午
 
 https://www.youtube.com/watch?v=YlOm9t_NuQc
