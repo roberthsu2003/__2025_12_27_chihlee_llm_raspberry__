@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 
 import requests
@@ -32,8 +31,8 @@ class Filter:
                 translated_text = self._translate_to_english(user_message, model_id)
 
                 # 3. 將翻譯後的內容寫回 body
-                print(f"原始內容: {user_message}")
-                print(f"翻譯後內容: {translated_text}")
+                print(f"[Company A] 原始內容: {user_message}")
+                print(f"[Company A] 翻譯後內容: {translated_text}")
 
                 body["messages"][-1]["content"] = translated_text
 
@@ -62,7 +61,7 @@ class Filter:
             response = requests.post(url, json=payload, timeout=20)
 
             if response.status_code == 404:
-                print(f"錯誤：找不到 API 路徑，請檢查 Ollama 版本")
+                print("錯誤：找不到 API 路徑，請檢查 Ollama 版本")
                 return text
 
             response.raise_for_status()
@@ -76,5 +75,18 @@ class Filter:
             print(f"翻譯請求失敗: {e}")
             return text
 
-    def outlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
-        return body
+        def outlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
+            if body.get("messages"):
+                last_msg = body["messages"][-1]
+                if last_msg.get("role") == "assistant":
+                    text = last_msg.get("content", "")
+                    last_msg["content"] = (
+                        text
+                        + """\n
+                    公司:飛肯股份有限公司
+                    地址:台北市信義區信義路五段1號
+                    電話:02-2345-6789
+                    網址:https://www.flyken.com
+                    """
+                    )
+            return body
