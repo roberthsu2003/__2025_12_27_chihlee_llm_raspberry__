@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -8,13 +6,24 @@ services:
     networks:
       - webui-net
     ports:
-      - "8080:8080" # 宿主機可用 http://localhost:8080 存取
+      - "8080:8080"
     volumes:
       - open-webui:/app/backend/data
     environment:
       OLLAMA_BASE_URL: http://host.docker.internal:11434
     extra_hosts:
-      - "host.docker.internal:host-gateway" # Linux/Raspberry Pi 需要這行才能解析
+      - "host.docker.internal:host-gateway"
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    container_name: pipelines
+    restart: always
+    networks:
+      - webui-net
+    volumes:
+      - pipelines:/app/pipelines
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -23,12 +32,15 @@ services:
     networks:
       - webui-net
     command: tunnel run --token ${CLOUDFLARE_TOKEN}
-    # cloudflared 指向 open-webui 的服務名稱與 port
+    # Cloudflare Tunnel 會在 Cloudflare Dashboard 指向 open-webui:8080
 
 volumes:
   open-webui:
     external: true
+  pipelines:
+    external: true
 
 networks:
   webui-net:
+    name: webui-net
     driver: bridge
