@@ -3,23 +3,28 @@ title: 最簡單的架構
 author: 徐國堂
 version: 1.0
 description: 這是一般的資料
-requirements: requests, pydantic
+requirements: requests, pydantic, google-genai
 """
 
 from typing import Optional
-import requests
-import logging
 from pydantic import BaseModel, Field
+from google import genai
+from google.genai import types
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+client = genai.Client(api_key="xxxxxx")
+
 
 class Filter:
     def inlet(self, body: dict, __user__: dict | None = None) -> dict:
         user_message = body["messages"][-1]["content"]
-        logger.info(f"[Filter] 使用者輸入: {user_message}")
-        logger.debug(f"[Filter] body keys:{body.keys()}")
-        # ...
+        print(f"[Filter] 使用者輸入: {user_message}")
+        response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        config=types.GenerateContentConfig(
+                system_instruction="請把輸入的繁體中文,轉換為英文"),
+                contents=user_message)
+        # 請將response.text的內容加入至body內
+        body["messages"][-1]["content"] = response.text        
         return body
 
     def outlet(self, body: dict, __user__: dict | None = None) -> dict:
