@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
 
-client = genai.Client(api_key="xxxxxx")
+client = genai.Client() # 這裡會自動從環境變數 GOOGLE_API_KEY 讀取 API Key
 
 
 class Filter:
