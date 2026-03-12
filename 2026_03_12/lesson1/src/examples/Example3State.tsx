@@ -1,8 +1,19 @@
+import { useState } from "react"
+
 function Example3State(){
+    const [count, setCount] = useState(0)
     return(
         <div className="example-card">
             <h2>範例3:State(狀態)</h2>
-            <p>請完成範例3來實作此部分</p>
+            <p className="hint">👆 點擊按鈕，觀察數字如何即時更新</p>
+            <section>
+                <p className="count-display">目前數字：<strong>{count}</strong></p>
+                <div className="button-group">
+                        <button onClick={() => setCount(count + 1)}>+</button>
+                        <button onClick={() => setCount(count - 1)}>-</button>
+                        <button onClick={() => setCount(0)}>歸零</button>
+                    </div>
+            </section>
         </div>
     )
 }
