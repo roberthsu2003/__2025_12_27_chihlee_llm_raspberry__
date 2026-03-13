@@ -49,6 +49,7 @@ export default function App() {
       <Link to="/" className="text-blue-600 hover:underline">首頁</Link>
       <Link to="/about" className="text-blue-600 hover:underline">關於我們</Link>
       <Link to="/products" className="text-blue-600 hover:underline">商品</Link>
+      <Link to="/contact" className="text-blue-600 hover:underline">聯絡</Link>
     </nav>
 
     <Outlet />
